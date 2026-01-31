@@ -89,14 +89,15 @@ class ChatBot:
         Returns a context string if math detected, else None.
         """
         # 1. Trigger Check
-        triggers = ["loan", "interest", "annuity", "bond", "mortgage", "blackjack", "poker", "odds", "probability", "calculate"]
+        triggers = ["loan", "interest", "annuity", "bond", "mortgage", "blackjack", "poker", "odds", "probability", "calculate", "invest", "compound", "growth", "rate", "%", "return"]
         if intent not in ["ANALYSIS"] and not any(t in user_input.lower() for t in triggers):
             return None
         
-            # 2. Extraction Prompt
+        # 2. Extraction Prompt
         extraction_prompt = (
             "Extract mathematical variables from the user query into a valid JSON object. "
             "Supported keys: 'type' (loan, annuity, bond, probability_blackjack, probability_generic, compound_interest, simple_interest), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
+            "Nuances: 'invest' -> compound_interest usually. 'mortgage' -> loan. "
             "Convert percentages to decimals (e.g. 18.99% -> 0.1899). "
             "Output JSON ONLY. No markdown."
         )
@@ -123,6 +124,10 @@ class ChatBot:
             # Note: prompts might return "blackjack" or "cards" based on prompt keywords, need to handle carefully.
             
             extracted_type = data.get("type", "unknown").lower()
+            
+            # v0.4.1 FORCE LOGIC: If input has "invest" or "compound" and type is unknown, force compound_interest
+            if (extracted_type == "unknown" or extracted_type == "" or "probability" in extracted_type) and ("invest" in user_input.lower() or "compound" in user_input.lower()):
+                 extracted_type = "compound_interest"
             
             # Map aliases to canonical types if needed, or just check inclusion
             # The extraction prompt asks for: 'loan', 'annuity', 'bond', 'probability_blackjack'

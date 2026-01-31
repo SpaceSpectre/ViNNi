@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.4.1: Finance Logic Fix
+- **Goal**: Ensure Investment queries (Compound Interest) trigger the Math Engine.
+- **Changes**:
+    - **Trigger Update (`core.py`)**: Added `invest`, `compound`, `growth`, `rate`, `%`.
+    - **Extraction Force**: If extraction returns "unknown" for investment queries, force `compound_interest`.
+- **Result**: `$1000 at 5%` triggers engine and calculates correct 1628.89.
+
 ### v0.4.0: MathVerifier & Gates
 - **Goal**: Hardening reliability via Gates and Post-Verification.
 - **Changes**:
