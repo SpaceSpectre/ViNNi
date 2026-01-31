@@ -58,26 +58,29 @@ class IntentTagger:
             scores["CHAT"] += 0.3
             
         # --- CODE SIGNALS ---
-        # Keywords
-        code_keywords = ['def ', 'class ', 'import ', 'return ', 'function', 'script', 'bug', 'error', 'api', 'json', 'variable']
+        # Keywords (Context-sensitive)
+        code_keywords = ['def ', 'class ', 'import ', 'return ', 'api', 'json'] # Removed vague 'function', 'script', 'variable'
         for w in code_keywords:
             if w in text:
-                scores["CODE"] += 0.3
+                scores["CODE"] += 0.4
         
-        # Verbs
-        if any(v in text for v in ['write', 'generate', 'implement', 'debug', 'fix']):
-            if "code" in text or "function" in text or "script" in text:
-                scores["CODE"] += 0.5
+        # Verbs - Strict pairing
+        if any(v in text for v in ['write', 'generate', 'implement', 'debug', 'fix', 'refactor']):
+            if any(t in text for t in ['code', 'function', 'script', 'app', 'class']):
+                scores["CODE"] += 0.6
             else:
-                scores["CODE"] += 0.2
+                scores["CODE"] += 0.3
                 
-        # Syntax
-        if "```" in text or "{" in text or "print(" in text:
-            scores["CODE"] += 0.4
+        # Syntax (Strongest signal)
+        if "```" in text or "{" in text or "print(" in text or "=>" in text:
+            scores["CODE"] += 0.6
             
         # --- ANALYSIS SIGNALS ---
-        if any(w in text for w in ['explain', 'why', 'how does', 'compare', 'difference', 'analyze']):
-            scores["ANALYSIS"] += 0.4
+        if any(w in text for w in ['explain', 'why', 'how does', 'compare', 'difference', 'analyze', 'meaning', 'concept']):
+            scores["ANALYSIS"] += 0.5
+            
+        if "tell me about" in text or "what is a" in text:
+             scores["ANALYSIS"] += 0.5
         
         if "?" in text and word_count > 6:
             scores["ANALYSIS"] += 0.2

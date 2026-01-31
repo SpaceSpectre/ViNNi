@@ -23,14 +23,20 @@ class ChatBot:
         if system_prompt_path and os.path.exists(system_prompt_path):
             with open(system_prompt_path, 'r', encoding='utf-8') as f:
                 self.system_prompt_content = f.read()
+                self.system_prompt_content = f.read()
+                
+                # Dynamic Version Injection (v0.1.5)
+                from vinni import __version__
+                self.prompt_version = f"v{__version__}"
+                
+                # Replace any hardcoded version in the text or append if missing
+                if "Version: ViNNi" in self.system_prompt_content:
+                    import re
+                    self.system_prompt_content = re.sub(r"Version: ViNNi v\d+\.\d+\.\d+", f"Version: ViNNi {self.prompt_version}", self.system_prompt_content)
+                
                 self.history.append({'role': 'system', 'content': self.system_prompt_content})
                 # Hash for reproducibility
                 self.prompt_hash = hashlib.sha256(self.system_prompt_content.encode()).hexdigest()[:8]
-                if "Version: ViNNi" in self.system_prompt_content:
-                    try:
-                        self.prompt_version = self.system_prompt_content.split("Version: ViNNi")[-1].strip()
-                    except:
-                        pass
 
     def _estimate_tokens(self, text: str) -> int:
         return len(text) // 4

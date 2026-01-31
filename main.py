@@ -47,7 +47,8 @@ def main():
         print(f"Error initializing bot: {e}")
         return
     
-    print("ViNNi v0.1.4 is ready. (Check vinni.log for audit)")
+    from vinni import __version__
+    print(f"ViNNi v{__version__} is ready. (Check vinni.log for audit)")
     print("-" * 50)
 
     while True:
@@ -61,8 +62,19 @@ def main():
                 break
             
             # Get intent before chatting
-            current_intent = bot.get_last_intent(user_input)
-                
+            # 1. Intent & Confidence Check (v0.1.5)
+            # We peek at intent before chatting to handle low confidence
+            intent_data = bot.tagger.tag(user_input)
+            current_intent = intent_data["predicted"]
+            confidence = intent_data["confidence"]
+            
+            # Confidence Fallback
+            if confidence < 0.6:
+                print(f"ViNNi [SYSTEM]: I'm not sure if you want {current_intent} or something else (Confidence: {confidence}).")
+                print("Could you please clarify? (e.g., 'Write code for...', 'Explain...')")
+                print("-" * 50)
+                continue
+
             print(f"ViNNi [{current_intent}]: ", end="", flush=True)
             
             for chunk in bot.chat(user_input):
