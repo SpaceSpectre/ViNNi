@@ -26,15 +26,34 @@ class ChatBot:
         # 1. Intent Tagging
         intent = self.tagger.tag(user_input)
         
-        # Yield metadata first (special format or just handle in UI? 
-        # The generator contract expects strings. We'll yield the content.)
-        # We can expose intent via a property or return tuple, but 
-        # to keep the stream simple for main.py, we will just proceed.
-        # Ideally, main.py should ask for the intent. 
-        # Let's make this method yield the content, and we'll log at the end.
-        
         self.history.append({'role': 'user', 'content': user_input})
         
+        # 2. Static Response Intercept (v0.1.2 Issue 1: Prevent Drift)
+        normalized_input = user_input.lower()
+        if "capabilities" in normalized_input or ("what" in normalized_input and "do" in normalized_input and "can" in normalized_input):
+            # Static, hard-coded response
+            static_response = (
+                "I support the following response intents:\n"
+                "- CHAT: General conversation, greetings, and simple explanations.\n"
+                "- CODE: Writing or explaining code snippets.\n"
+                "- ANALYSIS: Structured explanations of concepts and reasoning.\n"
+                "- DOCUMENT: Editing, drafting, or improving written text."
+            )
+            self.history.append({'role': 'assistant', 'content': static_response})
+            yield static_response
+            
+            # Log it
+            latency = (time.time() - start_time) * 1000
+            SecurityLogger.log_turn(
+                model="static-rule",
+                system_prompt="v0.1.2-static",
+                user_input=user_input,
+                intent="SYSTEM",
+                output=static_response,
+                latency_ms=latency
+            )
+            return
+
         full_response = ""
         
         try:

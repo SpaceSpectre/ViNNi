@@ -38,8 +38,8 @@ def main():
     if options:
         print(f"Configuration: {options}")
 
-    # Load v0.1.1 System Prompt
-    prompt_path = "prompts/system_v0.1.1.md"
+    # Load v0.1.2 System Prompt
+    prompt_path = "prompts/system_v0.1.2.md"
     
     try:
         bot = ChatBot(model_name=model_name, options=options, system_prompt_path=prompt_path)
@@ -47,7 +47,7 @@ def main():
         print(f"Error initializing bot: {e}")
         return
     
-    print("ViNNi v0.1 is ready. (Check vinni.log for audit)")
+    print("ViNNi v0.1.2 is ready. (Check vinni.log for audit)")
     print("-" * 50)
 
     while True:
