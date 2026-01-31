@@ -2,11 +2,14 @@
 
 ViNNi is a local AI chatbot designed to run efficiently on your laptop using Ollama. It serves as a personal assistant, capable of natural conversation and information retrieval, similar to Siri but fully local and private.
 
+**Current Version**: `v0.1.3` (Production Ready)
+
 ## Features
 - **Local Privacy**: Runs entirely on your machine.
+- **Strict & Stable**: Defined capability contract (CHAT, CODE, ANALYSIS, DOCUMENT).
+- **Observability Layer**: All interactions logged to `vinni.log` with Session ID, Intents, and Token Estimates.
+- **Static Meta-Responses**: "Who created you?" and "Capabilities" are hard-coded for zero drift.
 - **Multi-Model Support**: Choose between Llama 3.1 (Optimized) and Qwen 2.5 at startup.
-- **Custom Persona**: "ViNNi", created by Abhishek Arora.
-- **Streaming Responses**: Real-time text generation.
 
 ## Prerequisites
 1.  **Python 3.8+**
