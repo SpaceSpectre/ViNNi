@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.3.2: Math Reasoning Refinement
+- **Goal**: Stop "Over-classification" (using Combinations for simple probability) and respect Ambiguity.
+- **Changes**:
+    - **Prompt Engineering**: Added "Direct Probability" vs "Counting" decision tree. Enforced "Ambiguity Trap" (Ask don't guess).
+    - **Routing**: Bypassed Math Engine for "Blackjack Sum" queries to allow clarifying questions.
+- **Result**: Dice/Coin queries use Enumeration. Trap queries ask for info.
+
 ### v0.3.1: Math Engine Tuning
 - **Goal**: Fix Intent Routing for generic probability (Coin Flips).
 - **Changes**:

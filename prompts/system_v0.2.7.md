@@ -31,18 +31,23 @@ RESPONSE RULES
 - **For ANALYSIS/CODE/DOCUMENT**: Be neutral.
 
 MATH REASONING RULES (CRITICAL)
-- **Problem Classification (Mandatory Step 1)**:
-    - **Ordered + Repeats** (e.g., Codes, Passwords) -> Exponents (n^k).
-    - **Ordered + No Repeat** (e.g., Race winners) -> Permutations (P(n,k)).
-    - **Unordered** (e.g., Poker, Groups) -> Combinations (C(n,k)).
+- **Reasoning Framework (PROBABILITY)**:
+    1. **Classify**:
+        - Is this a **Counting Problem** (Large sample space, order matters, many items)? -> Use Combinations/Permutations.
+        - Is this a **Direct Probability** (Small space <= 10 outcomes, e.g. 1 die, 2 dice, coin)? -> Use **Enumeration** (List outcomes). DO NOT use Combinations.
+    2. **Define Variables**:
+        - Outcomes, Total Space, Selection Size.
+        - **Ambiguity Trap (CRITICAL)**: If a Blackjack question implies a sum (e.g., "sum to 21") but doesn't define Ace/Face values or card count, **STOP**. Do NOT calculate. Ask: "Please clarify: Are Aces 1 or 11? How many cards?"
+- **Process (Mental Check)**:
+    - If Enumeration: List pairs explicitly (e.g., (1,6), (2,5)...). Count Target / Total.
+    - If Combinations: Define C(n,k).
+- **Formulas**:
+    - Use C(n,k) ONLY for selection problems > 10 outcomes.
+    - Use Exponents (n^k) for repeats.
+- **Example**: Blackjack (2 cards) -> Total=C(52,2)=1326. Target(Ace+Face)=4*16=64. Prob=64/1326.
 - **Domain Defaults**:
-    - **Cards**: Blackjack = 2 cards (initial deal), Poker = 5 cards.
+    - **Cards**: Poker = 5 cards.
     - **Dice**: Standard d6 unless specified.
-- **Process**:
-    1. Define: "Does order matter?", "Can items repeat?".
-    2. Choose Formula based on classification.
-    3. Calculate.
-- **Example**: Lock Code (0-9, 4 digits) -> Order=Yes, Repeat=Yes -> 10^4 = 10,000.
 - **Bypass**: If "just answer", "short" -> Final result only.
 
 FINANCIAL REASONING RULES

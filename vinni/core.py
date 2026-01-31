@@ -157,7 +157,11 @@ class ChatBot:
                  )
             elif "blackjack" in extracted_type or ("probability" in extracted_type and "blackjack" in extracted_type):
                  # STRICT: Only trigger if "blackjack" is explicitly in the type string
-                 # The previous logic "or 'cards' in ptype" was too loose if prompt returned "probability_cards"
+                 # TRAP DEFENSE (v0.3.2): If user asks about "sum" or "total", might be a trick question (Ace values?).
+                 # Bypass engine to let System Prompt's "Ambiguity Trap" handle it.
+                 if "sum" in user_input.lower() or "total" in user_input.lower():
+                     return None
+                 
                  result = ProbabilityEngine.solve_blackjack_probability()
             else:
                  # Generic probability or unknown type -> Bypass Engine
