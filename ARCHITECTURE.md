@@ -59,6 +59,13 @@ graph TD
     - **Composite Keys**: Cache keys now include `md5(input + model_name + prompt_hash)`.
     - **Automatic Invalidation**: Changing the system prompt automatically invalidates old cache entries.
 
+### v0.2.6: Performance Analytics
+- **Goal**: Visualize system efficiency.
+- **Tool**: `scripts/analyze_metrics.py` parses logs to compute:
+    - Cache Hit Ratio.
+    - Latency Speedup (Hit vs Miss).
+    - Top Frequent Queries.
+
 ### v0.2.2: Response Caching
 - **Goal**: Reduce latency for repeated identical queries.
 - **Changes**:

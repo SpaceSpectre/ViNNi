@@ -1,0 +1,23 @@
+{
+  "total_requests": 141,
+  "cache_hit_ratio": 5.673758865248227,
+  "avg_latency_miss": 519.1960150375942,
+  "avg_latency_hit": 0.0,
+  "intents": {
+    "CODE": 35,
+    "CHAT": 72,
+    "ANALYSIS": 22,
+    "SYSTEM": 6,
+    "DOCUMENT": 6
+  },
+  "top_queries": [
+    {
+      "count": 8,
+      "text": "Write a haiku about speed."
+    },
+    {
+      "count": 6,
+      "text": "Tell me a random number between 1 and 100."
+    }
+  ]
+}
