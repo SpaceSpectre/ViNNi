@@ -41,6 +41,19 @@ graph TD
 
 ## Change Log
 
+### v0.2.9: Math Reasoning Guardrail
+- **Goal**: Fix silent correctness bugs in probability/math reasoning.
+- **Changes**:
+    - **Prompt Engineering**: Added `MATH REASONING RULES` to system prompt.
+    - **Logic**: Enforces standard combinatorial formulas (e.g., C(n,k)) for card games/selection problems.
+
+### v0.2.8: Dynamic Tone Module
+- **Goal**: User-controlled and context-aware styling.
+- **Changes**:
+    - **Logic**: `ChatBot.set_tone()` dynamically injects style instructions into the system prompt.
+    - **Modes**: `CASUAL` (Friendly), `PROFESSIONAL` (Academic), `EXECUTIVE` (Bullet points), `ADAPTIVE` (Default).
+    - **CLI**: `!tone` command for runtime switching.
+
 ### v0.2.7: Adaptive Tone
 - **Goal**: More engaging, casual conversational experience.
 - **Changes**:

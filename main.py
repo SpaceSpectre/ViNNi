@@ -82,6 +82,19 @@ def main():
                 print("-" * 50)
                 continue
 
+            if user_input.strip().startswith("!tone"):
+                parts = user_input.strip().split()
+                if len(parts) < 2:
+                    print("Usage: !tone [casual | professional | executive | adaptive]")
+                    continue
+                
+                new_tone = parts[1].lower()
+                if bot.set_tone(new_tone):
+                    print(f"✅ Tone switched to: {new_tone.upper()}")
+                else:
+                    print(f"❌ Invalid tone. Valid: casual, professional, executive, adaptive")
+                continue
+
             # 1. Intent & Confidence Check (v0.1.5)
             # We peek at intent before chatting to handle low confidence
             intent_data = bot.tagger.tag(user_input)

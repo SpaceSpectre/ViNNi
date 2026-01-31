@@ -32,23 +32,53 @@ class ChatBot:
             "DOCUMENT": 20
         }
         
+        self.tone = "adaptive" # v0.2.8
+        self.TONE_PROMPTS = {
+            "casual": "TONE OVERRIDE: Adopt a casual, friendly persona. Use humor where appropriate. Keep responses short and chatty.",
+            "professional": "TONE OVERRIDE: Adopt a strictly professional, academic persona. Be detailed, structured, and objective. No humor.",
+            "executive": "TONE OVERRIDE: Adopt an executive summary style. Use bullet points. Be extremely concise. BLUF (Bottom Line Up Front).",
+            "adaptive": "" # Default behavior
+        }
+        
+        self.base_system_prompt = ""
         if system_prompt_path and os.path.exists(system_prompt_path):
             with open(system_prompt_path, 'r', encoding='utf-8') as f:
-                self.system_prompt_content = f.read()
-                self.system_prompt_content = f.read()
+                self.base_system_prompt = f.read()
                 
                 # Dynamic Version Injection (v0.1.5)
                 from vinni import __version__
                 self.prompt_version = f"v{__version__}"
                 
-                # Replace any hardcoded version in the text or append if missing
-                if "Version: ViNNi" in self.system_prompt_content:
+                # Replace any hardcoded version
+                if "Version: ViNNi" in self.base_system_prompt:
                     import re
-                    self.system_prompt_content = re.sub(r"Version: ViNNi v\d+\.\d+\.\d+", f"Version: ViNNi {self.prompt_version}", self.system_prompt_content)
-                
-                self.history.append({'role': 'system', 'content': self.system_prompt_content})
-                # Hash for reproducibility
-                self.prompt_hash = hashlib.sha256(self.system_prompt_content.encode()).hexdigest()[:8]
+                    self.base_system_prompt = re.sub(r"Version: ViNNi v\d+\.\d+\.\d+", f"Version: ViNNi {self.prompt_version}", self.base_system_prompt)
+        
+        self.update_system_prompt()
+
+    def set_tone(self, tone: str):
+        if tone.lower() in self.TONE_PROMPTS:
+            self.tone = tone.lower()
+            self.update_system_prompt()
+            return True
+        return False
+
+    def update_system_prompt(self):
+        tone_instruction = self.TONE_PROMPTS.get(self.tone, "")
+        full_prompt = self.base_system_prompt
+        
+        if tone_instruction:
+            full_prompt += f"\n\n{tone_instruction}"
+            
+        self.system_prompt_content = full_prompt
+        # Reset history[0] to new prompt
+        if self.history and self.history[0]["role"] == "system":
+            self.history[0]["content"] = self.system_prompt_content
+        else:
+            self.history.insert(0, {'role': 'system', 'content': self.system_prompt_content})
+            
+        # Re-hash for cache invalidation (Auto-handles v0.2.5 requirement)
+        self.prompt_hash = hashlib.sha256(self.system_prompt_content.encode()).hexdigest()[:8]
 
     def _estimate_tokens(self, text: str) -> int:
         return len(text) // 4
