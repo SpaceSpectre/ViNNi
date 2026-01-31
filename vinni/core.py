@@ -3,6 +3,9 @@ import time
 import os
 from typing import List, Dict, Generator
 from vinni.monitor import IntentTagger, SecurityLogger
+from vinni.math_engine import FinanceEngine, ProbabilityEngine
+import json
+import re
 
 import hashlib
 import uuid
@@ -79,6 +82,86 @@ class ChatBot:
             
         # Re-hash for cache invalidation (Auto-handles v0.2.5 requirement)
         self.prompt_hash = hashlib.sha256(self.system_prompt_content.encode()).hexdigest()[:8]
+
+    def _process_math_request(self, user_input: str, intent: str) -> str:
+        """
+        v0.3.0: Deterministic Math Engine.
+        Returns a context string if math detected, else None.
+        """
+        # 1. Trigger Check
+        triggers = ["loan", "interest", "annuity", "bond", "mortgage", "blackjack", "poker", "odds", "probability", "calculate"]
+        if intent not in ["ANALYSIS"] and not any(t in user_input.lower() for t in triggers):
+            return None
+        
+        # 2. Extraction Prompt
+        extraction_prompt = (
+            "Extract mathematical variables from the user query into a valid JSON object. "
+            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
+            "Convert percentages to decimals (e.g. 18.99% -> 0.1899). "
+            "Output JSON ONLY. No markdown."
+        )
+        
+        try:
+            # Single-shot extraction
+            resp = ollama.chat(
+                model=self.model_name,
+                messages=[
+                    {'role': 'system', 'content': extraction_prompt},
+                    {'role': 'user', 'content': user_input}
+                ],
+                options={"temperature": 0.0} # Deterministic extraction
+            )
+            content = resp['message']['content']
+            # Clean json
+            json_str = content.replace("```json", "").replace("```", "").strip()
+            data = json.loads(json_str)
+            
+            result = None
+            ptype = data.get("type", "").lower()
+            
+            if "loan" in ptype:
+                # Default daily/weekly logic mapping
+                freq = data.get("payment_freq", "monthly")
+                # Handle "daily calculation" nuance? The engine handles it via simple amortization math.
+                result = FinanceEngine.calculate_loan_interest(
+                    principal=float(data.get("principal", 0)),
+                    annual_rate=float(data.get("rate_annual", 0)),
+                    months=int(data.get("years", 1)) * 12, # approx
+                    payment_freq=freq
+                )
+            elif "annuity" in ptype:
+                 # Check 'due' or 'ordinary'
+                 atype = "ordinary"
+                 if "beginning" in user_input.lower(): atype = "due"
+                 result = FinanceEngine.calculate_annuity(
+                     payment=float(data.get("payment_amount", data.get("principal", 0))), # LLM might map payment to principal
+                     rate=float(data.get("rate_annual", 0)),
+                     years=int(data.get("years", 0)),
+                     type=atype
+                 )
+            elif "bond" in ptype:
+                 result = FinanceEngine.calculate_bond(
+                     face=float(data.get("face_value", 1000)),
+                     coupon_rate=float(data.get("coupon_rate", 0)),
+                     ytm=float(data.get("ytm", 0)),
+                     years=int(data.get("years", 0))
+                 )
+            elif "blackjack" in ptype or "cards" in ptype:
+                 result = ProbabilityEngine.solve_blackjack_probability()
+            
+            if result:
+                return (
+                    f"SYSTEM: I have utilized the Deterministic Math Engine to calculate the precise values.\n"
+                    f"VERIFIED RESULT JSON: {json.dumps(result, indent=2)}\n"
+                    f"INSTRUCTION: You MUST use these exact numbers in your response. Do not re-calculate. "
+                    f"Present the solution using these values."
+                )
+                
+        except Exception as e:
+            # Fallback (Silent fail, let LLM handle it normally)
+            return None
+            
+        return None
 
     def _estimate_tokens(self, text: str) -> int:
         return len(text) // 4
@@ -178,6 +261,12 @@ class ChatBot:
             )
             return
 
+        # 3.5 Math Engine Intercept (v0.3.0)
+        math_context = self._process_math_request(user_input, predicted_intent)
+        if math_context:
+            # Inject context imperceptibly to user, but visible to LLM
+            self.history.append({'role': 'system', 'content': math_context})
+        
         full_response = ""
         
         try:

@@ -41,6 +41,14 @@ graph TD
 
 ## Change Log
 
+### v0.3.0: Deterministic Math Engine
+- **Goal**: Replace LLM arithmetic with Python-based Math Engine (MathVerifier).
+- **Architecture**:
+    - **Engine**: `vinni/math_engine.py` (Decimal-precision Finance/Prob logic).
+    - **Integration**: `core.py` intercepts Math intents, runs extraction, computes result, and injects "GROUND TRUTH" context.
+    - **Test Suite**: `tests/test_finance_suite.py` (Gatekeeper).
+- **Status**: Logic implemented. LLM adherence tuning in progress.
+
 ### v0.2.15: Financial Reliability
 - **Goal**: Fix critical interest rate miscalculations.
 - **Changes**:
