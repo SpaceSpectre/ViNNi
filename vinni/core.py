@@ -114,9 +114,14 @@ class ChatBot:
 
         # 3. Cache Check (v0.2.2)
         # 3. Cache Check (v0.2.2/v0.2.4 Segmented)
+        # 3. Cache Check (v0.2.2/v0.2.4 Segmented)
         predicted_intent = intent_info.get("predicted", "CHAT")
         target_cache = self.caches.get(predicted_intent, self.caches["CHAT"])
-        cache_key = input_hash
+        
+        # v0.2.5: Composite Key for Stale Prevention
+        # We assume input_hash is just the user input. We combine it with model config.
+        composite_key_str = f"{input_hash}|{self.model_name}|{self.prompt_hash}"
+        cache_key = hashlib.md5(composite_key_str.encode()).hexdigest()
         
         if cache_key in target_cache:
             cached_response = target_cache[cache_key]

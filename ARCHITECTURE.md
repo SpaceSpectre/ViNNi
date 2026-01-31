@@ -53,6 +53,12 @@ graph TD
     - **Intent-Based Storage**: Caches are now segregated (`CHAT`, `CODE`, `ANALYSIS`, `DOCUMENT`).
     - **Dynamic Limits**: Higher capacity for small/frequent `CHAT` (100) vs heavy `ANALYSIS` (20).
 
+### v0.2.5: Stale Cache Prevention
+- **Goal**: Ensure cache validity after model/prompt updates.
+- **Changes**:
+    - **Composite Keys**: Cache keys now include `md5(input + model_name + prompt_hash)`.
+    - **Automatic Invalidation**: Changing the system prompt automatically invalidates old cache entries.
+
 ### v0.2.2: Response Caching
 - **Goal**: Reduce latency for repeated identical queries.
 - **Changes**:
