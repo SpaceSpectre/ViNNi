@@ -41,6 +41,14 @@ graph TD
 
 ## Change Log
 
+### v0.2.15: Financial Reliability
+- **Goal**: Fix critical interest rate miscalculations.
+- **Changes**:
+    - **Prompt Rules**: Added strict `FINANCIAL REASONING RULES`.
+    - **Sanity Check**: Enforced "Daily Rate < 1%" invariant.
+    - **Logic**: Mandated "% -> Decimal" conversion step.
+    - **Disclosure**: Forced "ASSUMPTIONS" header for approximations.
+
 ### v0.2.14: Precision & Routing
 - **Goal**: Fix Permutation vs Combination errors (Lock Codes).
 - **Changes**:

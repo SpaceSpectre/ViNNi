@@ -2,7 +2,7 @@
 
 ViNNi is a local AI chatbot designed to run efficiently on your laptop using Ollama. It serves as a personal assistant, capable of natural conversation and information retrieval, similar to Siri but fully local and private.
 
-**Current Version**: `v0.2.14` (Precision Release)
+**Current Version**: `v0.2.15` (Financial Reliability Release)
 
 ## Features
 - **Local Privacy**: Runs entirely on your machine.
