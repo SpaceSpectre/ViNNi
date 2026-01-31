@@ -86,8 +86,12 @@ class IntentTagger:
             scores["ANALYSIS"] += 0.2
             
         # --- DOCUMENT SIGNALS ---
-        if any(w in text for w in ['draft', 'summarize', 'poem', 'story', 'email', 'essay', 'edit', 'rewrite']):
-            scores["DOCUMENT"] += 0.5
+        # Boost strong verbs to override "short input" chatter
+        if any(w in text for w in ['draft', 'summarize', 'poem', 'story', 'email', 'essay', 'edit', 'rewrite', 'check']):
+            scores["DOCUMENT"] += 0.8
+            
+        if "check" in text and "grammar" in text:
+            scores["DOCUMENT"] += 0.4
 
         # Normalize & Decide
         total = sum(scores.values()) or 1.0

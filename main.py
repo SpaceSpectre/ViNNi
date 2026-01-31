@@ -62,6 +62,26 @@ def main():
                 break
             
             # Get intent before chatting
+            # 0. Command Intercepts (v0.2.0)
+            if user_input.strip() == "!version":
+                from vinni import __version__
+                print(f"ViNNi v{__version__}")
+                print("-" * 50)
+                continue
+                
+            if user_input.strip() == "!help":
+                print("ViNNi Help & Commands:")
+                print("  !help       - Show this menu")
+                print("  !version    - Show current version")
+                print("  exit / quit - End session")
+                print("\nSupported Intents:")
+                print("  CHAT       - General conversation")
+                print("  CODE       - Generate/Explain code")
+                print("  ANALYSIS   - Deep explanation")
+                print("  DOCUMENT   - Draft/Edit text")
+                print("-" * 50)
+                continue
+
             # 1. Intent & Confidence Check (v0.1.5)
             # We peek at intent before chatting to handle low confidence
             intent_data = bot.tagger.tag(user_input)
