@@ -93,10 +93,10 @@ class ChatBot:
         if intent not in ["ANALYSIS"] and not any(t in user_input.lower() for t in triggers):
             return None
         
-        # 2. Extraction Prompt
+            # 2. Extraction Prompt
         extraction_prompt = (
             "Extract mathematical variables from the user query into a valid JSON object. "
-            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack, probability_generic), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
+            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack, probability_generic, compound_interest, simple_interest), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
             "Convert percentages to decimals (e.g. 18.99% -> 0.1899). "
             "Output JSON ONLY. No markdown."
         )
@@ -119,7 +119,7 @@ class ChatBot:
             # Strict Routing (v0.3.1)
             # If the extracted type isn't explicitly supported, RETURN NONE.
             # This prevents generic "probability" queries (Coin Flip) from triggering Blackjack logic.
-            supported_types = ["loan", "annuity", "bond", "probability_blackjack"] 
+            supported_types = ["loan", "annuity", "bond", "probability_blackjack", "compound_interest", "simple_interest"] 
             # Note: prompts might return "blackjack" or "cards" based on prompt keywords, need to handle carefully.
             
             extracted_type = data.get("type", "unknown").lower()
@@ -129,6 +129,15 @@ class ChatBot:
             
             result = None
             
+            # AMBIGUITY GATE (v0.4.0)
+            # If Blackjack sum query detected, bypass Engine AND force Clarification.
+            if ("blackjack" in extracted_type or "cards" in user_input) and ("sum" in user_input.lower() or "total" in user_input.lower()):
+                 return (
+                     "SYSTEM: This query is AMBIGUOUS regarding card values (Ace=1/11? 10-cards?). "
+                     "INSTRUCTION: You MUST ask the user for clarification before calculating. "
+                     "Do not attempt to answer."
+                 )
+
             if "loan" in extracted_type:
                 # Default daily/weekly logic mapping
                 freq = data.get("payment_freq", "monthly")
@@ -138,6 +147,14 @@ class ChatBot:
                     months=int(data.get("years", 1)) * 12, # approx
                     payment_freq=freq
                 )
+            elif "compound" in extracted_type:
+                 # Default frequency 1 (annual)
+                 result = FinanceEngine.calculate_compound_interest(
+                     principal=float(data.get("principal", 0)),
+                     rate_annual=float(data.get("rate_annual", 0)),
+                     years=int(data.get("years", 0)),
+                     freq=1 # explicit default
+                 )
             elif "annuity" in extracted_type:
                  # Check 'due' or 'ordinary'
                  atype = "ordinary"
@@ -157,11 +174,6 @@ class ChatBot:
                  )
             elif "blackjack" in extracted_type or ("probability" in extracted_type and "blackjack" in extracted_type):
                  # STRICT: Only trigger if "blackjack" is explicitly in the type string
-                 # TRAP DEFENSE (v0.3.2): If user asks about "sum" or "total", might be a trick question (Ace values?).
-                 # Bypass engine to let System Prompt's "Ambiguity Trap" handle it.
-                 if "sum" in user_input.lower() or "total" in user_input.lower():
-                     return None
-                 
                  result = ProbabilityEngine.solve_blackjack_probability()
             else:
                  # Generic probability or unknown type -> Bypass Engine
@@ -301,6 +313,21 @@ class ChatBot:
                 yield content
                 
             self.history.append({'role': 'assistant', 'content': full_response})
+            
+            # v0.4.0 MathVerifier (Post-Generation Check)
+            # Only verify if we triggered Math Engine OR if "probability"/"calculate" in query
+            triggers = ["loan", "interest", "annuity", "bond", "blackjack", "probability", "calculate"]
+            if any(t in user_input.lower() for t in triggers):
+                 from vinni.verifier import MathVerifier
+                 verifier = MathVerifier(model_name=self.model_name)
+                 v_result = verifier.verify(user_input, full_response)
+                 
+                 if v_result.get("status") == "FAIL":
+                      warning = f"\n\n[MathVerifier Warning]: Potential error detected ({v_result.get('reason')}). Please verify logic."
+                      yield warning
+                      full_response += warning
+                      # Update history with warning included?
+                      self.history[-1]['content'] = full_response
             
             # Update Cache (v0.2.4 Segmented LRU)
             limit = self.cache_limits.get(predicted_intent, 50)

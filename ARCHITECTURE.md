@@ -41,6 +41,14 @@ graph TD
 
 ## Change Log
 
+### v0.4.0: MathVerifier & Gates
+- **Goal**: Hardening reliability via Gates and Post-Verification.
+- **Changes**:
+    - **MathVerifier (`vinni/verifier.py`)**: New Agent checks answers for logic/formula errors.
+    - **Ambiguity Gate (`core.py`)**: Explicitly blocks ambiguous Blackjack queries ("Sum to 21") -> Forces Clarification.
+    - **Finance Engine**: Added `compound_interest` and `simple_interest` (Fixes $1000 at 5% hallucination).
+- **Result**: Traps caught, Compound Interest deterministic.
+
 ### v0.3.2: Math Reasoning Refinement
 - **Goal**: Stop "Over-classification" (using Combinations for simple probability) and respect Ambiguity.
 - **Changes**:

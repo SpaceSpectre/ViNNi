@@ -114,3 +114,25 @@ class FinanceEngine:
         return {
             "price": float(round(price, 2))
         }
+
+    @staticmethod
+    def calculate_compound_interest(principal: float, rate_annual: float, years: int, freq: int = 1) -> dict:
+        """
+        Compound Interest: A = P(1 + r/n)^(nt)
+        freq: 1 (Annual), 12 (Monthly), 365 (Daily)
+        """
+        P = Decimal(str(principal))
+        r = Decimal(str(rate_annual))
+        n = Decimal(str(freq))
+        t = Decimal(str(years))
+        
+        # A = P * (1 + r/n)^(n*t)
+        amount = P * ((1 + (r / n)) ** (n * t))
+        interest = amount - P
+        
+        return {
+            "principal": float(round(P, 2)),
+            "future_value": float(round(amount, 2)),
+            "total_interest": float(round(interest, 2)),
+            "formula": f"A = {P} * (1 + {rate_annual}/{freq})^({freq}*{years})"
+        }
