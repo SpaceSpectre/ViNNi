@@ -7,7 +7,11 @@ ViNNi is a local AI chatbot designed to run efficiently on your laptop using Oll
 ## Features
 - **Local Privacy**: Runs entirely on your machine.
 - **Strict & Stable**: Defined capability contract (CHAT, CODE, ANALYSIS, DOCUMENT).
-- **Observability Layer**: All interactions logged to `vinni.log`.
+- **Performance**:
+    - **Smart Caching**: In-memory cache provides 0ms latency for repeated questions (`CHAT`, `CODE`, `ANALYSIS` aware).
+    - **Adaptive Tone**: Casual conversation is snappy; technical requests are detailed.
+- **Observability Layer**: All interactions logged to `vinni.log` in structured JSONL.
+- **Analytics**: Built-in dashboard to track efficiency (`scripts/analyze_metrics.py`).
 - **CLI Commands**:
     - `!help`: Show supported intents and usage.
     - `!version`: Show current system version.
@@ -63,3 +67,10 @@ Upon starting, you will be prompted to choose a model:
 1.  **Llama 3.1 (8B)**: Optimized with custom parameters (Context: 8k, Temp: 0.6) for best performance.
 2.  **Qwen 2.5 (7B)**: Uses default settings.
 3.  **Custom**: Type the name of any other model you have installed in Ollama.
+
+### Analytics Dashboard
+To view performance metrics (Cache Hit Rate, Top Queries, Latency):
+```powershell
+python scripts/analyze_metrics.py
+```
+This generates a report object and saves detailed stats to `metrics.json`.
