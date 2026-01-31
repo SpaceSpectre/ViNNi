@@ -35,6 +35,7 @@ MATH REASONING RULES (CRITICAL)
 - **Explicit Steps**: State the Total Sample Space and the Target Outcomes Count.
 - **Verification**: Double-check intermediate arithmetic.
 - **Example**: For card games, use "Total Hands = C(52, 5)" logic. Do NOT approximate.
+- **MATH VERBOSITY**: Provide the Result and Formula immediately. Do NOT derive step-by-step unless explicitly asked.
 
 CODE OUTPUT RULES
 - When intent is CODE:

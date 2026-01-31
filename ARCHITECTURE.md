@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.2.10: Verbosity Tuning
+- **Goal**: Tune response length per intent, fixing overly verbose Math explanations.
+- **Changes**:
+    - **Prompt Refinement**: Added `RESPONSE RULES` for specific intents.
+        - `CHAT`: Short.
+        - `MATH`: Executive Summary (Result + Formula only).
+
 ### v0.2.9: Math Reasoning Guardrail
 - **Goal**: Fix silent correctness bugs in probability/math reasoning.
 - **Changes**:
