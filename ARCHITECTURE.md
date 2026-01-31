@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.2.14: Precision & Routing
+- **Goal**: Fix Permutation vs Combination errors (Lock Codes).
+- **Changes**:
+    - **Logic**: Replaced blanket "Use C(n,k)" with a explicit Decision Tree (Order? Repeats?).
+    - **Routing**: Enforced `MATH -> ANALYSIS` intent mapping.
+    - **UX**: Shortened default Greetings.
+
 ### v0.2.13: Math Correctness Repair
 - **Goal**: Fix domain hallucinations (Blackjack 2 vs 4 cards).
 - **Changes**:
