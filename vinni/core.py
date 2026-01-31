@@ -19,6 +19,7 @@ class ChatBot:
         self.prompt_version = "unknown"
         self.prompt_hash = "none"
         self.last_turn_tokens = 0
+        self.response_cache = {} # v0.2.2 Cache
         
         if system_prompt_path and os.path.exists(system_prompt_path):
             with open(system_prompt_path, 'r', encoding='utf-8') as f:
@@ -92,7 +93,33 @@ class ChatBot:
                 output=static_response,
                 output_tokens=output_tokens,
                 latency_ms=latency,
-                flags={"asked_clarification": False, "refusal": False, "static_response": True}
+                flags={"asked_clarification": False, "refusal": False, "static_response": True, "cache_hit": False}
+            )
+            return
+
+        # 3. Cache Check (v0.2.2)
+        cache_key = hashlib.md5(user_input.encode()).hexdigest()
+        if cache_key in self.response_cache:
+            cached_response = self.response_cache[cache_key]
+            self.history.append({'role': 'assistant', 'content': cached_response})
+            yield cached_response
+            
+            output_tokens = self._estimate_tokens(cached_response)
+            self.last_turn_tokens = output_tokens
+            latency = (time.time() - start_time) * 1000
+            
+            SecurityLogger.log_turn(
+                session_id=self.session_id,
+                request_id=request_id,
+                model={"name": "cache", "source": "memory"},
+                system_info={"name": "ViNNi", "version": self.prompt_version, "system_prompt_hash": self.prompt_hash},
+                user_input=user_input,
+                input_tokens=input_tokens,
+                intent_info=intent_info,
+                output=cached_response,
+                output_tokens=output_tokens,
+                latency_ms=latency,
+                flags={"asked_clarification": False, "refusal": False, "static_response": False, "cache_hit": True}
             )
             return
 
@@ -113,7 +140,12 @@ class ChatBot:
                 
             self.history.append({'role': 'assistant', 'content': full_response})
             
-            # 3. Observability
+            # Update Cache (Simple LRU-like: Remove oldest if > 50)
+            if len(self.response_cache) > 50:
+                self.response_cache.pop(next(iter(self.response_cache)))
+            self.response_cache[cache_key] = full_response
+            
+            # 4. Observability
             latency = (time.time() - start_time) * 1000
             output_tokens = self._estimate_tokens(full_response)
             self.last_turn_tokens = output_tokens
@@ -129,7 +161,7 @@ class ChatBot:
                 output=full_response,
                 output_tokens=output_tokens,
                 latency_ms=latency,
-                flags={"asked_clarification": False, "refusal": False, "static_response": False}
+                flags={"asked_clarification": False, "refusal": False, "static_response": False, "cache_hit": False}
             )
             
         except Exception as e:

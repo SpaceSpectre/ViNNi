@@ -149,7 +149,8 @@ class SecurityLogger:
             "flags": flags or {
                 "asked_clarification": False,
                 "refusal": False,
-                "static_response": False
+                "static_response": False,
+                "cache_hit": False
             }
         }
         

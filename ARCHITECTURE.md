@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.2.2: Response Caching
+- **Goal**: Reduce latency for repeated identical queries.
+- **Changes**:
+    - **Caching**: Added LRU-style in-memory cache (Max 50 items).
+    - **Optimization**: Near-zero latency for repeated static or generative prompts.
+    - **Observability**: Added `cache_hit` flag to logs.
+
 ### v0.2.1: Enhanced Logging
 - **Goal**: Compliance with structured audit requirements.
 - **Changes**:
