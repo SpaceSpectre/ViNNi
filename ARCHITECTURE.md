@@ -36,9 +36,24 @@ graph TD
     - `SecurityLogger`: Writes structured JSON events to `vinni.log`.
 - **`prompts/`**:
     - `system_v0.1.2.md`: The locked, production-ready system prompt.
-- **`vinni.log`**: Audit log file (gitignored).
+- **`tests/`**:
+    - `regression_v02_0.py`: Consolidated regression suite.
 
 ## Change Log
+
+### v0.2.0: UX & Governance
+- **Goal**: Add user-facing commands and establish legal/security framework.
+- **Changes**:
+    - **CLI**: Added `!help` and `!version` command intercepts (Zero Latency).
+    - **Governance**: Added `SECURITY.md`, `CONTRIBUTING.md`, `LICENSE.md`.
+    - **Testing**: Unified regression suite covering all 4 intents (including new `DOCUMENT` intent).
+
+### v0.1.5: Polish
+- **Goal**: Consistency and Intent Tuning.
+- **Changes**:
+    - Version injection via `vinni/__init__.py`.
+    - Smart Fallback for low confidence (< 0.6).
+    - Tuned `ANALYSIS` vs `CODE` routing.
 
 ### v0.1.3: Observability Layer
 - **Goal**: Full visibility into system performance and usage.
