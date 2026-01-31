@@ -4,7 +4,9 @@ import os
 from typing import List, Dict, Generator
 from vinni.monitor import IntentTagger, SecurityLogger
 
+import hashlib
 import uuid
+import os
 
 class ChatBot:
     def __init__(self, model_name: str = "llama3", options: Dict = None, system_prompt_path: str = None):
@@ -13,15 +15,17 @@ class ChatBot:
         self.history: List[Dict[str, str]] = []
         self.tagger = IntentTagger()
         self.system_prompt_content = ""
-        self.session_id = str(uuid.uuid4())[:8] # Short session ID
+        self.session_id = str(uuid.uuid4())[:8]
         self.prompt_version = "unknown"
-        self.last_turn_tokens = 0 # store roughly
+        self.prompt_hash = "none"
+        self.last_turn_tokens = 0
         
         if system_prompt_path and os.path.exists(system_prompt_path):
             with open(system_prompt_path, 'r', encoding='utf-8') as f:
                 self.system_prompt_content = f.read()
                 self.history.append({'role': 'system', 'content': self.system_prompt_content})
-                # Extract version if possible
+                # Hash for reproducibility
+                self.prompt_hash = hashlib.sha256(self.system_prompt_content.encode()).hexdigest()[:8]
                 if "Version: ViNNi" in self.system_prompt_content:
                     try:
                         self.prompt_version = self.system_prompt_content.split("Version: ViNNi")[-1].strip()
@@ -36,17 +40,19 @@ class ChatBot:
         Sends a message to the Ollama model and yields chunks of the response.
         """
         start_time = time.time()
+        request_id = f"req-{uuid.uuid4().hex[:5]}"
         self.last_turn_tokens = 0
         input_tokens = self._estimate_tokens(user_input)
         
-        # 1. Intent Tagging
-        intent = self.tagger.tag(user_input)
+        # 1. Intent Tagging (v0.1.4: Returns Dict)
+        intent_info = self.tagger.tag(user_input)
         
         self.history.append({'role': 'user', 'content': user_input})
         
-        # 2. Static Response Intercepts (v0.1.3)
+        # 2. Static Response Intercepts
         normalized_input = user_input.lower()
         static_response = None
+        is_static = False
         
         if "capabilities" in normalized_input or ("what" in normalized_input and "do" in normalized_input and "can" in normalized_input):
             static_response = (
@@ -56,8 +62,10 @@ class ChatBot:
                 "- ANALYSIS: Structured explanations of concepts and reasoning.\n"
                 "- DOCUMENT: Editing, drafting, or improving written text."
             )
+            is_static = True
         elif "who created you" in normalized_input or "who initialized you" in normalized_input:
              static_response = "I am ViNNi, a locally run AI system initialized by Abhishek Arora."
+             is_static = True
 
         if static_response:
             self.history.append({'role': 'assistant', 'content': static_response})
@@ -65,18 +73,20 @@ class ChatBot:
             
             output_tokens = self._estimate_tokens(static_response)
             self.last_turn_tokens = output_tokens
-            
             latency = (time.time() - start_time) * 1000
+            
             SecurityLogger.log_turn(
                 session_id=self.session_id,
-                model="static-rule",
-                system_prompt_version=self.prompt_version,
+                request_id=request_id,
+                model={"name": "static", "quant": "N/A"},
+                system_info={"name": "ViNNi", "version": self.prompt_version, "system_prompt_hash": self.prompt_hash},
                 user_input=user_input,
-                intent="SYSTEM",
-                output=static_response,
-                latency_ms=latency,
                 input_tokens=input_tokens,
-                output_tokens=output_tokens
+                intent_info=intent_info,
+                output=static_response,
+                output_tokens=output_tokens,
+                latency_ms=latency,
+                flags={"asked_clarification": False, "refusal": False, "static_response": True}
             )
             return
 
@@ -104,18 +114,21 @@ class ChatBot:
             
             SecurityLogger.log_turn(
                 session_id=self.session_id,
-                model=self.model_name,
-                system_prompt_version=self.prompt_version,
+                request_id=request_id,
+                model={"name": self.model_name, "options": self.options},
+                system_info={"name": "ViNNi", "version": self.prompt_version, "system_prompt_hash": self.prompt_hash},
                 user_input=user_input,
-                intent=intent,
-                output=full_response,
-                latency_ms=latency,
                 input_tokens=input_tokens,
-                output_tokens=output_tokens
+                intent_info=intent_info,
+                output=full_response,
+                output_tokens=output_tokens,
+                latency_ms=latency,
+                flags={"asked_clarification": False, "refusal": False, "static_response": False}
             )
             
         except Exception as e:
             yield f"\n[System Error: {str(e)}]"
             
     def get_last_intent(self, user_input: str) -> str:
-        return self.tagger.tag(user_input)
+        # Compatibility wrapper for CLI
+        return self.tagger.tag(user_input)["predicted"]

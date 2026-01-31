@@ -47,7 +47,7 @@ def main():
         print(f"Error initializing bot: {e}")
         return
     
-    print("ViNNi v0.1.3 is ready. (Check vinni.log for audit)")
+    print("ViNNi v0.1.4 is ready. (Check vinni.log for audit)")
     print("-" * 50)
 
     while True:
