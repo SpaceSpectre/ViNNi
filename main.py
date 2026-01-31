@@ -8,7 +8,7 @@ def main():
     print("1. Llama 3.1 (8B) - [Optimized: GPU, Context: 8k, Temp: 0.6]")
     print("2. Qwen 2.5 (7B)  - [Default]")
     
-    choice = input("\nEnter choice (1-3): ").strip()
+    choice = input("\nEnter choice (1 or 2): ").strip()
     
     model_name = "llama3.1"
     options = {}
@@ -38,19 +38,16 @@ def main():
     if options:
         print(f"Configuration: {options}")
 
-    system_prompt = (
-        "You are ViNNi, a highly advanced local AI assistant running locally. You were created by Abhishek Arora. "
-        "You are helpful, concise, and intelligent. "
-        "If asked about your origins, you proudly state that you are ViNNi, created by Abhishek Arora."
-    )
-
+    # Load v0.1.1 System Prompt
+    prompt_path = "prompts/system_v0.1.1.md"
+    
     try:
-        bot = ChatBot(model_name=model_name, options=options, system_prompt=system_prompt)
+        bot = ChatBot(model_name=model_name, options=options, system_prompt_path=prompt_path)
     except Exception as e:
         print(f"Error initializing bot: {e}")
         return
     
-    print("ViNNi is ready! Type 'exit' or 'quit' to end.")
+    print("ViNNi v0.1 is ready. (Check vinni.log for audit)")
     print("-" * 50)
 
     while True:
@@ -62,11 +59,19 @@ def main():
             if user_input.lower() in ["exit", "quit"]:
                 print("Goodbye!")
                 break
+            
+            # Get intent before chatting
+            current_intent = bot.get_last_intent(user_input)
                 
-            print("ViNNi: ", end="", flush=True)
+            print(f"ViNNi [{current_intent}]: ", end="", flush=True)
+            
+            token_count_approx = 0
             for chunk in bot.chat(user_input):
                 print(chunk, end="", flush=True)
-            print("\n" + "-" * 50)
+                token_count_approx += 1
+            
+            print(f"\n[Tokens: ~{token_count_approx}]")
+            print("-" * 50)
             
         except KeyboardInterrupt:
             print("\nExiting...")
