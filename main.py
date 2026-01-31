@@ -38,8 +38,8 @@ def main():
     if options:
         print(f"Configuration: {options}")
 
-    # Load v0.1.2 System Prompt
-    prompt_path = "prompts/system_v0.1.2.md"
+    # Load v0.2.7 System Prompt (Adaptive Tone)
+    prompt_path = "prompts/system_v0.2.7.md"
     
     try:
         bot = ChatBot(model_name=model_name, options=options, system_prompt_path=prompt_path)

@@ -66,6 +66,12 @@ graph TD
     - Latency Speedup (Hit vs Miss).
     - Top Frequent Queries.
 
+### v0.2.7: Adaptive Tone
+- **Goal**: More engaging, casual conversational experience.
+- **Changes**:
+    - **System Prompt v0.2.7**: Explicit instructions for `CHAT` to be short and casual.
+    - **Defaults**: `main.py` uses v0.2.7 prompt by default.
+
 ### v0.2.2: Response Caching
 - **Goal**: Reduce latency for repeated identical queries.
 - **Changes**:
