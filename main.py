@@ -47,7 +47,7 @@ def main():
         print(f"Error initializing bot: {e}")
         return
     
-    print("ViNNi v0.1.2 is ready. (Check vinni.log for audit)")
+    print("ViNNi v0.1.3 is ready. (Check vinni.log for audit)")
     print("-" * 50)
 
     while True:
@@ -65,12 +65,10 @@ def main():
                 
             print(f"ViNNi [{current_intent}]: ", end="", flush=True)
             
-            token_count_approx = 0
             for chunk in bot.chat(user_input):
                 print(chunk, end="", flush=True)
-                token_count_approx += 1
             
-            print(f"\n[Tokens: ~{token_count_approx}]")
+            print(f"\n[Tokens: ~{bot.last_turn_tokens}]")
             print("-" * 50)
             
         except KeyboardInterrupt:

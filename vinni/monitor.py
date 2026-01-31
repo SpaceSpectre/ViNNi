@@ -46,19 +46,32 @@ class SecurityLogger:
     Handles observability and audit logging.
     """
     @staticmethod
-    def log_turn(model: str, system_prompt: str, user_input: str, intent: str, output: str, latency_ms: float):
+    def log_turn(
+        session_id: str,
+        model: str, 
+        system_prompt_version: str,
+        user_input: str, 
+        intent: str, 
+        output: str, 
+        latency_ms: float,
+        input_tokens: int = 0,
+        output_tokens: int = 0
+    ):
         entry = {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "session_id": session_id,
             "model": model,
-            "prompt_hash": hashlib.sha256(system_prompt.encode()).hexdigest() if system_prompt else "none",
-            "input_len": len(user_input),
+            "system_prompt_version": system_prompt_version,
             "intent": intent,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
             "latency_ms": round(latency_ms, 2),
-            "output_len": len(output)
+            # Full content logging for local debug; opaque in prod usually
+            "input_snippet": user_input[:100], 
+            "output_len": len(output) 
         }
-        # We log the metadata, avoiding logging full PII content in the structured log for now 
-        # (or typically you might log content if this is a local opaque system).
-        # For v0.1 we will log the full input/output for debugging as it's local.
+        
+        # Include full input/output for now as per v0.1 requirement
         entry["input"] = user_input
         entry["output"] = output
         
