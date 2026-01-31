@@ -41,6 +41,12 @@ graph TD
 
 ## Change Log
 
+### v0.2.11: Persona Unification
+- **Goal**: Ensure consistent voice across ALL intents.
+- **Changes**:
+    - **Global Anchor**: Added "Clear, calm, friendly, precise — never overly verbose, never robotic" to System Prompt `CORE IDENTITY`.
+    - **Outcome**: `ANALYSIS` and `MATH` retain a friendly human touch while remaining structured.
+
 ### v0.2.10: Verbosity Tuning
 - **Goal**: Tune response length per intent, fixing overly verbose Math explanations.
 - **Changes**:
