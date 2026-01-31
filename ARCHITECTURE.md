@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.3.1: Math Engine Tuning
+- **Goal**: Fix Intent Routing for generic probability (Coin Flips).
+- **Changes**:
+    - **Extraction Prompt**: Added `probability_generic` type.
+    - **Logic**: Enforced strict whitelist for Engine triggers (`loan`, `annuity`, `bond`, `probability_blackjack`). All others bypass engine.
+- **Result**: Coin flips are handled by LLM (Correct), Blackjack by Engine (Correct).
+
 ### v0.3.0: Deterministic Math Engine
 - **Goal**: Replace LLM arithmetic with Python-based Math Engine (MathVerifier).
 - **Architecture**:

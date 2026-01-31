@@ -96,7 +96,7 @@ class ChatBot:
         # 2. Extraction Prompt
         extraction_prompt = (
             "Extract mathematical variables from the user query into a valid JSON object. "
-            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
+            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack, probability_generic), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
             "Convert percentages to decimals (e.g. 18.99% -> 0.1899). "
             "Output JSON ONLY. No markdown."
         )
@@ -116,38 +116,52 @@ class ChatBot:
             json_str = content.replace("```json", "").replace("```", "").strip()
             data = json.loads(json_str)
             
-            result = None
-            ptype = data.get("type", "").lower()
+            # Strict Routing (v0.3.1)
+            # If the extracted type isn't explicitly supported, RETURN NONE.
+            # This prevents generic "probability" queries (Coin Flip) from triggering Blackjack logic.
+            supported_types = ["loan", "annuity", "bond", "probability_blackjack"] 
+            # Note: prompts might return "blackjack" or "cards" based on prompt keywords, need to handle carefully.
             
-            if "loan" in ptype:
+            extracted_type = data.get("type", "unknown").lower()
+            
+            # Map aliases to canonical types if needed, or just check inclusion
+            # The extraction prompt asks for: 'loan', 'annuity', 'bond', 'probability_blackjack'
+            
+            result = None
+            
+            if "loan" in extracted_type:
                 # Default daily/weekly logic mapping
                 freq = data.get("payment_freq", "monthly")
-                # Handle "daily calculation" nuance? The engine handles it via simple amortization math.
                 result = FinanceEngine.calculate_loan_interest(
                     principal=float(data.get("principal", 0)),
                     annual_rate=float(data.get("rate_annual", 0)),
                     months=int(data.get("years", 1)) * 12, # approx
                     payment_freq=freq
                 )
-            elif "annuity" in ptype:
+            elif "annuity" in extracted_type:
                  # Check 'due' or 'ordinary'
                  atype = "ordinary"
                  if "beginning" in user_input.lower(): atype = "due"
                  result = FinanceEngine.calculate_annuity(
-                     payment=float(data.get("payment_amount", data.get("principal", 0))), # LLM might map payment to principal
+                     payment=float(data.get("payment_amount", data.get("principal", 0))),
                      rate=float(data.get("rate_annual", 0)),
                      years=int(data.get("years", 0)),
                      type=atype
                  )
-            elif "bond" in ptype:
+            elif "bond" in extracted_type:
                  result = FinanceEngine.calculate_bond(
                      face=float(data.get("face_value", 1000)),
                      coupon_rate=float(data.get("coupon_rate", 0)),
                      ytm=float(data.get("ytm", 0)),
                      years=int(data.get("years", 0))
                  )
-            elif "blackjack" in ptype or "cards" in ptype:
+            elif "blackjack" in extracted_type or ("probability" in extracted_type and "blackjack" in extracted_type):
+                 # STRICT: Only trigger if "blackjack" is explicitly in the type string
+                 # The previous logic "or 'cards' in ptype" was too loose if prompt returned "probability_cards"
                  result = ProbabilityEngine.solve_blackjack_probability()
+            else:
+                 # Generic probability or unknown type -> Bypass Engine
+                 return None
             
             if result:
                 return (
@@ -264,8 +278,8 @@ class ChatBot:
         # 3.5 Math Engine Intercept (v0.3.0)
         math_context = self._process_math_request(user_input, predicted_intent)
         if math_context:
-            # Inject context imperceptibly to user, but visible to LLM
-            self.history.append({'role': 'system', 'content': math_context})
+            # Inject context by appending to user message (Avoids System-at-end issue)
+            self.history[-1]['content'] += f"\n\n{math_context}"
         
         full_response = ""
         
