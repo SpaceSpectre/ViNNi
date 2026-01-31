@@ -116,6 +116,7 @@ class SecurityLogger:
     Handles observability and audit logging (Canonical JSONL).
     """
     @staticmethod
+    @staticmethod
     def log_turn(
         session_id: str,
         request_id: str,
@@ -127,19 +128,33 @@ class SecurityLogger:
         output: str,
         output_tokens: int,
         latency_ms: float,
-        flags: Dict[str, bool] = None
+        flags: Dict[str, bool] = None,
+        input_hash: str = None # v0.2.3
     ):
+        # Flattened metrics for easier analytics (v0.2.3)
+        cache_hit = flags.get("cache_hit", False) if flags else False
+        
         entry = {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+            # -- Quick Analytics Fields --
+            "intent": intent_info["predicted"],
+            "confidence": intent_info["confidence"],
+            "cache_hit": cache_hit,
+            "latency_ms": round(latency_ms, 2),
+            "input_hash": input_hash,
+            # -- Deep Audit --
             "session_id": session_id,
             "request_id": request_id,
             "model": model,
             "system": system_info,
             "input": {
-                "text": user_input, # v0.1 requirement: log full input (local)
-                "tokens": input_tokens
+                "text": user_input,
+                "tokens": input_tokens,
+                "hash": input_hash
             },
-            "intent": intent_info,
+            "intent_details": intent_info, # Renamed from 'intent' to avoid collision, or keep both? 
+                                           # User schema had "intent": "CODE" (string). 
+                                           # I will allow 'intent' to be the string, and 'intent_details' be the object.
             "output": {
                "text": output, 
                "summary": (output[:100] + '...') if len(output) > 100 else output,

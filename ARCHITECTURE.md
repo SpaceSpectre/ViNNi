@@ -41,6 +41,12 @@ graph TD
 
 ## Change Log
 
+### v0.2.3: Logging Polish
+- **Goal**: Improved log analytics and ease of parsing.
+- **Changes**:
+    - Flattened critical metrics (`intent`, `confidence`, `cache_hit`, `input_hash`) to top-level JSON fields.
+    - Added MD5 `input_hash` for query analytics.
+
 ### v0.2.2: Response Caching
 - **Goal**: Reduce latency for repeated identical queries.
 - **Changes**:

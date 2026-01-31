@@ -51,6 +51,9 @@ class ChatBot:
         self.last_turn_tokens = 0
         input_tokens = self._estimate_tokens(user_input)
         
+        # 0. Hash Input (v0.2.3)
+        input_hash = hashlib.md5(user_input.encode()).hexdigest()
+
         # 1. Intent Tagging (v0.1.4: Returns Dict)
         intent_info = self.tagger.tag(user_input)
         
@@ -93,12 +96,13 @@ class ChatBot:
                 output=static_response,
                 output_tokens=output_tokens,
                 latency_ms=latency,
-                flags={"asked_clarification": False, "refusal": False, "static_response": True, "cache_hit": False}
+                flags={"asked_clarification": False, "refusal": False, "static_response": True, "cache_hit": False},
+                input_hash=input_hash
             )
             return
 
         # 3. Cache Check (v0.2.2)
-        cache_key = hashlib.md5(user_input.encode()).hexdigest()
+        cache_key = input_hash
         if cache_key in self.response_cache:
             cached_response = self.response_cache[cache_key]
             self.history.append({'role': 'assistant', 'content': cached_response})
@@ -119,7 +123,8 @@ class ChatBot:
                 output=cached_response,
                 output_tokens=output_tokens,
                 latency_ms=latency,
-                flags={"asked_clarification": False, "refusal": False, "static_response": False, "cache_hit": True}
+                flags={"asked_clarification": False, "refusal": False, "static_response": False, "cache_hit": True},
+                input_hash=input_hash
             )
             return
 
@@ -161,7 +166,8 @@ class ChatBot:
                 output=full_response,
                 output_tokens=output_tokens,
                 latency_ms=latency,
-                flags={"asked_clarification": False, "refusal": False, "static_response": False, "cache_hit": False}
+                flags={"asked_clarification": False, "refusal": False, "static_response": False, "cache_hit": False},
+                input_hash=input_hash
             )
             
         except Exception as e:
