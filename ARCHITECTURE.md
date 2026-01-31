@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.2.13: Math Correctness Repair
+- **Goal**: Fix domain hallucinations (Blackjack 2 vs 4 cards).
+- **Changes**:
+    - **Prompt Engineering**: Added explicit Few-Shot example for Blackjack math.
+    - **Logic**: Enforced "Definitions First" reasoning (Hand Size, Sample Space, Targets).
+    - **Feature**: Added "Answer Only" bypass triggering (e.g. "just answer").
+
 ### v0.2.12: Medical Disclaimer Optimization
 - **Goal**: Minimize friction for general wellness queries.
 - **Changes**:

@@ -1,0 +1,3 @@
+FAIL: Value. Resp: **Probability Calculation**
+
+When playing Blackjack, you're initially dealt 2 cards (A). Let's defin

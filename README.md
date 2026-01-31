@@ -2,14 +2,16 @@
 
 ViNNi is a local AI chatbot designed to run efficiently on your laptop using Ollama. It serves as a personal assistant, capable of natural conversation and information retrieval, similar to Siri but fully local and private.
 
-**Current Version**: `v0.2.12` (Polished Experience Release)
+**Current Version**: `v0.2.13` (Math Fix Release)
 
 ## Features
 - **Local Privacy**: Runs entirely on your machine.
 - **Strict & Stable**: Defined capability contract (CHAT, CODE, ANALYSIS, DOCUMENT).
 - **Performance**:
+- **Performance**:
     - **Smart Caching**: In-memory cache provides 0ms latency for repeated questions (`CHAT`, `CODE`, `ANALYSIS` aware).
     - **Dynamic Tone**: Switch between `Casual`, `Professional`, and `Executive` styles on the fly.
+    - **Answer Only Mode**: Use "just answer" to skip explanations.
 - **Observability Layer**: All interactions logged to `vinni.log` in structured JSONL.
 - **Analytics**: Built-in dashboard to track efficiency (`scripts/analyze_metrics.py`).
 - **CLI Commands**:
