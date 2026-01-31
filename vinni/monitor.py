@@ -141,14 +141,8 @@ class SecurityLogger:
             },
             "intent": intent_info,
             "output": {
-               # "text": output, # Schema doesn't strictly say to log output text, but v0.1 log did. 
-               # User "Canonical" schema showed just tokens/latency. 
-               # I'll stick to User's Schema strictly but keep 'text' implicitly validation?
-               # ACTUALLY user schema example has NO output text.
-               # I will OMIT output text to be strictly schema-compliant unless debugging needs it.
-               # Wait, user said "Can I reproduce it?". Logs usually need input... and output is helpful.
-               # User schema had: "tokens": 259, "latency_ms": 412.
-               # I'll follow that structure.
+               "text": output, 
+               "summary": (output[:100] + '...') if len(output) > 100 else output,
                "tokens": output_tokens,
                "latency_ms": round(latency_ms, 2)
             },

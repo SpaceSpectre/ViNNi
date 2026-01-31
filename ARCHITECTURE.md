@@ -41,6 +41,12 @@ graph TD
 
 ## Change Log
 
+### v0.2.1: Enhanced Logging
+- **Goal**: Compliance with structured audit requirements.
+- **Changes**:
+    - Added `response_summary` (truncated output) to `vinni.log`.
+    - Added full `text` output to logs for deeper local debugging.
+
 ### v0.2.0: UX & Governance
 - **Goal**: Add user-facing commands and establish legal/security framework.
 - **Changes**:
