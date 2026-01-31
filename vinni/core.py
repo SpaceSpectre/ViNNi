@@ -19,7 +19,18 @@ class ChatBot:
         self.prompt_version = "unknown"
         self.prompt_hash = "none"
         self.last_turn_tokens = 0
-        self.response_cache = {} # v0.2.2 Cache
+        self.caches = {
+            "CHAT": {},
+            "CODE": {},
+            "ANALYSIS": {},
+            "DOCUMENT": {}
+        }
+        self.cache_limits = {
+            "CHAT": 100,      # High freq, small
+            "CODE": 50,       # Med freq
+            "ANALYSIS": 20,   # Low freq, Large content
+            "DOCUMENT": 20
+        }
         
         if system_prompt_path and os.path.exists(system_prompt_path):
             with open(system_prompt_path, 'r', encoding='utf-8') as f:
@@ -102,9 +113,13 @@ class ChatBot:
             return
 
         # 3. Cache Check (v0.2.2)
+        # 3. Cache Check (v0.2.2/v0.2.4 Segmented)
+        predicted_intent = intent_info.get("predicted", "CHAT")
+        target_cache = self.caches.get(predicted_intent, self.caches["CHAT"])
         cache_key = input_hash
-        if cache_key in self.response_cache:
-            cached_response = self.response_cache[cache_key]
+        
+        if cache_key in target_cache:
+            cached_response = target_cache[cache_key]
             self.history.append({'role': 'assistant', 'content': cached_response})
             yield cached_response
             
@@ -115,7 +130,7 @@ class ChatBot:
             SecurityLogger.log_turn(
                 session_id=self.session_id,
                 request_id=request_id,
-                model={"name": "cache", "source": "memory"},
+                model={"name": "cache", "source": f"memory.{predicted_intent}"},
                 system_info={"name": "ViNNi", "version": self.prompt_version, "system_prompt_hash": self.prompt_hash},
                 user_input=user_input,
                 input_tokens=input_tokens,
@@ -145,10 +160,13 @@ class ChatBot:
                 
             self.history.append({'role': 'assistant', 'content': full_response})
             
-            # Update Cache (Simple LRU-like: Remove oldest if > 50)
-            if len(self.response_cache) > 50:
-                self.response_cache.pop(next(iter(self.response_cache)))
-            self.response_cache[cache_key] = full_response
+            # Update Cache (v0.2.4 Segmented LRU)
+            limit = self.cache_limits.get(predicted_intent, 50)
+            if len(target_cache) >= limit:
+                # Remove oldest (Next iter on dict returns first key)
+                target_cache.pop(next(iter(target_cache)))
+            
+            target_cache[cache_key] = full_response
             
             # 4. Observability
             latency = (time.time() - start_time) * 1000

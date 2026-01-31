@@ -47,6 +47,12 @@ graph TD
     - Flattened critical metrics (`intent`, `confidence`, `cache_hit`, `input_hash`) to top-level JSON fields.
     - Added MD5 `input_hash` for query analytics.
 
+### v0.2.4: Segmented Caching
+- **Goal**: Optimize memory usage for specific intents.
+- **Changes**:
+    - **Intent-Based Storage**: Caches are now segregated (`CHAT`, `CODE`, `ANALYSIS`, `DOCUMENT`).
+    - **Dynamic Limits**: Higher capacity for small/frequent `CHAT` (100) vs heavy `ANALYSIS` (20).
+
 ### v0.2.2: Response Caching
 - **Goal**: Reduce latency for repeated identical queries.
 - **Changes**:
