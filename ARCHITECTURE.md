@@ -41,23 +41,11 @@ graph TD
 
 ## Change Log
 
-### v0.2.3: Logging Polish
-- **Goal**: Improved log analytics and ease of parsing.
+### v0.2.7: Adaptive Tone
+- **Goal**: More engaging, casual conversational experience.
 - **Changes**:
-    - Flattened critical metrics (`intent`, `confidence`, `cache_hit`, `input_hash`) to top-level JSON fields.
-    - Added MD5 `input_hash` for query analytics.
-
-### v0.2.4: Segmented Caching
-- **Goal**: Optimize memory usage for specific intents.
-- **Changes**:
-    - **Intent-Based Storage**: Caches are now segregated (`CHAT`, `CODE`, `ANALYSIS`, `DOCUMENT`).
-    - **Dynamic Limits**: Higher capacity for small/frequent `CHAT` (100) vs heavy `ANALYSIS` (20).
-
-### v0.2.5: Stale Cache Prevention
-- **Goal**: Ensure cache validity after model/prompt updates.
-- **Changes**:
-    - **Composite Keys**: Cache keys now include `md5(input + model_name + prompt_hash)`.
-    - **Automatic Invalidation**: Changing the system prompt automatically invalidates old cache entries.
+    - **System Prompt v0.2.7**: Explicit instructions for `CHAT` to be short and casual.
+    - **Defaults**: `main.py` uses v0.2.7 prompt by default.
 
 ### v0.2.6: Performance Analytics
 - **Goal**: Visualize system efficiency.
@@ -66,11 +54,23 @@ graph TD
     - Latency Speedup (Hit vs Miss).
     - Top Frequent Queries.
 
-### v0.2.7: Adaptive Tone
-- **Goal**: More engaging, casual conversational experience.
+### v0.2.5: Stale Cache Prevention
+- **Goal**: Ensure cache validity after model/prompt updates.
 - **Changes**:
-    - **System Prompt v0.2.7**: Explicit instructions for `CHAT` to be short and casual.
-    - **Defaults**: `main.py` uses v0.2.7 prompt by default.
+    - **Composite Keys**: Cache keys now include `md5(input + model_name + prompt_hash)`.
+    - **Automatic Invalidation**: Changing the system prompt automatically invalidates old cache entries.
+
+### v0.2.4: Segmented Caching
+- **Goal**: Optimize memory usage for specific intents.
+- **Changes**:
+    - **Intent-Based Storage**: Caches are now segregated (`CHAT`, `CODE`, `ANALYSIS`, `DOCUMENT`).
+    - **Dynamic Limits**: Higher capacity for small/frequent `CHAT` (100) vs heavy `ANALYSIS` (20).
+
+### v0.2.3: Logging Polish
+- **Goal**: Improved log analytics and ease of parsing.
+- **Changes**:
+    - Flattened critical metrics (`intent`, `confidence`, `cache_hit`, `input_hash`) to top-level JSON fields.
+    - Added MD5 `input_hash` for query analytics.
 
 ### v0.2.2: Response Caching
 - **Goal**: Reduce latency for repeated identical queries.
