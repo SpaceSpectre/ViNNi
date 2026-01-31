@@ -41,6 +41,13 @@ graph TD
 
 ## Change Log
 
+### v0.2.12: Medical Disclaimer Optimization
+- **Goal**: Minimize friction for general wellness queries.
+- **Changes**:
+    - **Policy**: Explicitly forbids disclaimers for general nutrition/fitness.
+    - **Trigger**: Disclaimers only appear for specific treatment/diagnosis advice.
+    - **Format**: Single-sentence footer (no preachy intros).
+
 ### v0.2.11: Persona Unification
 - **Goal**: Ensure consistent voice across ALL intents.
 - **Changes**:
