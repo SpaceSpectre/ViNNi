@@ -90,14 +90,15 @@ class ChatBot:
         """
         # 1. Trigger Check
         triggers = ["loan", "interest", "annuity", "bond", "mortgage", "blackjack", "poker", "odds", "probability", "calculate", "invest", "compound", "growth", "rate", "%", "return"]
-        if intent not in ["ANALYSIS"] and not any(t in user_input.lower() for t in triggers):
+        # v0.5.0: ALWAYS validation trigger if keywords present (removed ANALYSIS exclusion)
+        if not any(t in user_input.lower() for t in triggers):
             return None
         
         # 2. Extraction Prompt
         extraction_prompt = (
             "Extract mathematical variables from the user query into a valid JSON object. "
-            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack, probability_generic, compound_interest, simple_interest), 'principal', 'rate_annual', 'years', 'payment_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
-            "Nuances: 'invest' -> compound_interest usually. 'mortgage' -> loan. "
+            "Supported keys: 'type' (loan, annuity, bond, probability_blackjack, probability_generic, compound_interest, simple_interest), 'principal', 'rate_annual', 'years', 'payment_freq', 'compounding_freq', 'face_value', 'coupon_rate', 'ytm', 'hand_size', 'payment_amount'. "
+            "Nuances: 'invest' -> compound_interest usually. 'mortgage' -> loan. 'calculated annually' -> compounding_freq='annually'. "
             "Convert percentages to decimals (e.g. 18.99% -> 0.1899). "
             "Output JSON ONLY. No markdown."
         )
@@ -110,14 +111,25 @@ class ChatBot:
                     {'role': 'system', 'content': extraction_prompt},
                     {'role': 'user', 'content': user_input}
                 ],
-                options={"temperature": 0.0} # Deterministic extraction
+                options={"temperature": 0.0}
             )
             content = resp['message']['content']
             # Clean json
             json_str = content.replace("```json", "").replace("```", "").strip()
-            data = json.loads(json_str)
+            # Attempt to find '{' and '}' if extra text exists
+            start = json_str.find("{")
+            end = json_str.rfind("}")
+            if start != -1 and end != -1:
+                json_str = json_str[start:end+1]
             
-            # Strict Routing (v0.3.1)
+            data = json.loads(json_str)
+        except Exception as e:
+            print(f"[DEBUG] Extraction Failed: {e}")
+            data = {} 
+        
+        # Logic Flow continues even if extraction failed (using Force Logic)
+        
+        # Strict Routing (v0.3.1)
             # If the extracted type isn't explicitly supported, RETURN NONE.
             # This prevents generic "probability" queries (Coin Flip) from triggering Blackjack logic.
             supported_types = ["loan", "annuity", "bond", "probability_blackjack", "compound_interest", "simple_interest"] 
@@ -125,11 +137,19 @@ class ChatBot:
             
             extracted_type = data.get("type", "unknown").lower()
             
-            # v0.4.1 FORCE LOGIC: If input has "invest" or "compound" and type is unknown, force compound_interest
-            if (extracted_type == "unknown" or extracted_type == "" or "probability" in extracted_type) and ("invest" in user_input.lower() or "compound" in user_input.lower()):
-                 extracted_type = "compound_interest"
+            # Alias Mapping
+            if "mortgage" in extracted_type: extracted_type = "loan"
+            if "invest" in extracted_type: extracted_type = "compound_interest"
+            if "deposit" in extracted_type: extracted_type = "compound_interest"
             
-            # Map aliases to canonical types if needed, or just check inclusion
+            # v0.4.1 FORCE LOGIC: If input has "invest" or "compound" and type is unknown, force compound_interest
+            if (extracted_type == "unknown" or extracted_type == "" or "probability" in extracted_type or "calculation" in extracted_type) and ("invest" in user_input.lower() or "compound" in user_input.lower()):
+                 extracted_type = "compound_interest"
+
+            # v0.4.2 FORCE LOGIC: Aggressive Loan Override
+            # If input explicitly mentions "loan" or "mortgage", force type to loan regardless of extraction error
+            if "loan" in user_input.lower() or "mortgage" in user_input.lower():
+                 extracted_type = "loan"
             # The extraction prompt asks for: 'loan', 'annuity', 'bond', 'probability_blackjack'
             
             result = None
@@ -146,12 +166,64 @@ class ChatBot:
             if "loan" in extracted_type:
                 # Default daily/weekly logic mapping
                 freq = data.get("payment_freq", "monthly")
-                result = FinanceEngine.calculate_loan_interest(
-                    principal=float(data.get("principal", 0)),
+                comp_freq = data.get("compounding_freq", "monthly")
+                
+                # v0.4.2 Hard Override for Compounding Text
+                if "calculated annually" in user_input.lower() or "compounded annually" in user_input.lower():
+                    comp_freq = "annually"
+                if "compounded semi-annually" in user_input.lower() or "semi-annual" in user_input.lower():
+                    comp_freq = "semi-annually"
+
+                # v0.5.0 Parameter Validation
+                principal = float(data.get("principal", 0))
+                if principal <= 0:
+                     return "SYSTEM ERROR: Loan detected but Principal amount is missing or zero. INSTRUCTION: Ask user for the loan amount explicitly."
+
+                # v0.8.0 Advanced Finance Features
+                # 1. Canadian Mortgage Detection
+                if "canadian" in user_input.lower() and "mortgage" in user_input.lower():
+                     comp_freq = "semi-annually"
+                
+                # 2. Extra Payment Extraction (Regex)
+                extra_payment = 0.0
+                extra_match = re.search(r"extra.*\$([\d,]+)", user_input.lower())
+                if extra_match:
+                     extra_payment = float(extra_match.group(1).replace(",", ""))
+                
+                # v0.7.0 Multi-Scenario Calculation (Super-Context)
+                scenarios = {}
+                
+                # 1. Primary Request
+                scenarios["PRIMARY_REQUEST"] = FinanceEngine.calculate_loan_interest(
+                    principal=principal,
                     annual_rate=float(data.get("rate_annual", 0)),
                     months=int(data.get("years", 1)) * 12, # approx
-                    payment_freq=freq
+                    payment_freq=freq,
+                    compounding_freq=comp_freq,
+                    extra_payment=extra_payment
                 )
+                
+                # 2. Contextual Monthly (if needed)
+                if freq != "monthly":
+                    scenarios["CONTEXT_MONTHLY"] = FinanceEngine.calculate_loan_interest(
+                        principal=principal,
+                        annual_rate=float(data.get("rate_annual", 0)),
+                        months=int(data.get("years", 1)) * 12,
+                        payment_freq="monthly",
+                        compounding_freq=comp_freq
+                    )
+                    
+                # 3. Contextual Bi-weekly (if needed - Auto-Comparison for "Part d")
+                if "biweekly" not in freq and "bi-weekly" not in freq:
+                     scenarios["CONTEXT_BIWEEKLY"] = FinanceEngine.calculate_loan_interest(
+                        principal=principal,
+                        annual_rate=float(data.get("rate_annual", 0)),
+                        months=int(data.get("years", 1)) * 12,
+                        payment_freq="biweekly",
+                        compounding_freq=comp_freq
+                    )
+                
+                result = scenarios
             elif "compound" in extracted_type:
                  # Default frequency 1 (annual)
                  result = FinanceEngine.calculate_compound_interest(
@@ -223,7 +295,9 @@ class ChatBot:
         static_response = None
         is_static = False
         
-        if "capabilities" in normalized_input or ("what" in normalized_input and "do" in normalized_input and "can" in normalized_input):
+        # v0.7.1: Strict Phrase Matching (Fixes "Canadian" trigger loop)
+        help_phrases = ["what can you do", "your capabilities", "list intents", "what are your features", "help me understand what you do"]
+        if any(p in normalized_input for p in help_phrases) or normalized_input.strip() == "help":
             static_response = (
                 "I support the following response intents:\n"
                 "- CHAT: General conversation, greetings, and simple explanations.\n"
@@ -328,7 +402,9 @@ class ChatBot:
                  v_result = verifier.verify(user_input, full_response)
                  
                  if v_result.get("status") == "FAIL":
-                      warning = f"\n\n[MathVerifier Warning]: Potential error detected ({v_result.get('reason')}). Please verify logic."
+                      rule_id = v_result.get("rule_id", "MV-XXX")
+                      severity = v_result.get("severity", "HARD")
+                      warning = f"\n\n⚠️ [MathVerifier] {rule_id} ({severity}): {v_result.get('reason')} RESULT IS INVALID."
                       yield warning
                       full_response += warning
                       # Update history with warning included?

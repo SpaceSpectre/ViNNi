@@ -41,6 +41,58 @@ graph TD
 
 ## Change Log
 
+### v0.8.0: Advanced Finance Features
+- **Goal**: Support Canadian Mortgages (Semi-Annual Compounding) and Voluntary Extra Payments.
+- **Changes**:
+    - **Math Engine**: Restored `compounding_freq` support (Effective Rate: $(1+r/c)^{c/p}-1$).
+    - **Math Engine**: Added `extra_payment` logic (Recalculates Payoff Time & Interest Saved).
+    - **Core**: Detects "Canadian" (sets semi-annual) and extracts "Extra Payment".
+    - **Result**: Precise Canadian mortgage math and payoff scenarios.
+
+### v0.7.1: Routing Logic Fix
+- **Goal**: Fix static trigger loop ("Canadian convention" triggering "Capabilities").
+- **Changes**:
+    - **Core**: Tightened `static_response` trigger trigger to strictly match help phrases, removing loose `and` logic.
+    - **Result**: Routing loop resolved; "Canadian" queries now correctly route to Math Engine.
+
+### v0.7.0: Finance Multi-Scenario Context
+- **Goal**: Prevent comparisons hallucination by automatically calculating comparison scenarios.
+- **Changes**:
+    - **Core**: For `loan` queries, `_process_math_request` now injects a `scenarios` dictionary including `PRIMARY`, `CONTEXT_MONTHLY`, and `CONTEXT_BIWEEKLY`.
+    - **Verifier**: Updated MV-023 to reject "13 periods" hallucination.
+    - **Result**: Complex multi-part queries like "Part d) Bi-weekly?" now use pre-calculated deterministic comparisons.
+
+### v0.6.0: MathVerifier Rule Table (v1.0)
+- **Goal**: Implement deterministic Rule Table (MV-XXX) for strict finance/math validation.
+- **Changes**:
+    - **Verifier**: Implemented Rules MV-012 (Simple Interest), MV-023 (Bi-weekly), MV-040/041 (Invariants), MV-050 (Dominance), MV-060 (Sanity Bounds).
+    - **Verifier**: Returns `rule_id` and `severity`.
+    - **Core**: Displays warning: `⚠️ [MathVerifier] MV-XXX (HARD): ...`.
+    - **Result**: Automated rejection of invalid finance calculations.
+
+### v0.5.1: Finance Invariants & Safety
+- **Goal**: Prevent logical fallacies in multi-scenario finance queries.
+- **Changes**:
+    - **Verifier**: Added Invariant Checks (Total ~= Payment * N) and Dominance Rules (Higher Freq != Higher Interest).
+    - **Core**: Enhanced MathVerifier warning to be "CRITICAL ERROR" and append to response.
+    - **Result**: "Bi-weekly increases interest" hallucinations are now strictly blocked/flagged.
+
+### v0.5.0: Finance Hardening & Reliability
+- **Goal**: Resolve conceptual finance errors (Engine Bypass, Hallucination) and enforce strict math verification.
+- **Changes**:
+    - **Core**: Removed `ANALYSIS` intent exclusion for triggers; Finance keywords ALWAYS invoke the Math Engine.
+    - **Core**: Added strict Parameter Validation (blocks zero-principal queries).
+    - **Verifier**: Added Deterministic Rules to reject "Simple Interest" logic in Loans and "24 payments" for Bi-weekly.
+    - **Engine**: Validated Effective Rate and Frequency logic.
+    - **Result**: Correctly handles "Semi-Annual Compounding / Monthly Payment" and "Bi-weekly" (26 payments) scenarios without hallucination.
+
+### v0.4.2: Finance Engine Upgrade
+- **Goal**: Fix Loan Calculation logic for mismatched compounding (Effective Rate).
+- **Changes**:
+    - **Math Engine**: Updated `calculate_loan_interest` to support `compounding_freq` and use Effective Rate formula ($r_{eff}$).
+    - **Core**: Added Robust JSON extraction (substring finder) and `compounding_freq` support.
+    - **Result**: Correctly handles "Annual Compounding / Biweekly Payment" scenarios (eliminating phantom monthly calc).
+
 ### v0.4.1: Finance Logic Fix
 - **Goal**: Ensure Investment queries (Compound Interest) trigger the Math Engine.
 - **Changes**:

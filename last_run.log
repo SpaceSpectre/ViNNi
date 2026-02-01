@@ -1,0 +1,20 @@
+ASSUMPTIONS:
+- Compounding frequency: Annually
+- Biweekly payments are made for 365 days/year * 2 payments/month = 730 payments in 7 years
+
+RESULT IS APPROXIMATE.
+
+To calculate the monthly payment, we'll first convert the annual interest rate to a decimal and then use the formula:
+
+Monthly Payment = P [ i(1 + i)^n ] / [ (1 + i)^n - 1]
+
+Where:
+- P = Principal loan amount ($35,000)
+- i = Monthly interest rate (6.99%/year / 12 months/year = 0.005792)
+- n = Number of payments (7 years * 12 months/year = 84 months)
+
+Monthly Payment ≈ $523.91
+
+Since you asked for biweekly payment, we'll divide the monthly payment by 2:
+
+Biweekly Payment ≈ $261.96
