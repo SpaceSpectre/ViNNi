@@ -15,6 +15,9 @@ def main():
     
     if choice == "1":
         model_name = "llama3.1"
+        options = {
+            "num_ctx": 8192,
+            "temperature": 0.6,
             "top_p": 0.9,
             "num_gpu": 99 # Force all layers to GPU
         }
