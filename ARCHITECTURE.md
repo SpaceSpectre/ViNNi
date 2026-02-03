@@ -41,6 +41,14 @@ graph TD
 
 ## Change Log
 
+### v0.9.0: Trust & Transparency
+- **Goal**: Add Confidence Scoring, Assumptions, and Regression Snapshots.
+- **Changes**:
+    - **Core**: Track assumptions during extraction (e.g. "Defaulted to Monthly Compounding").
+    - **Core**: Inject instructions for "TL;DR" vs "Detail" structure.
+    - **Core**: Append "Confidence: 1.0 (Deterministic Math)" footer.
+    - **Snapshot**: Saves JSON snapshots of math interactions to `tests/snapshots/`.
+
 ### v0.8.0: Advanced Finance Features
 - **Goal**: Support Canadian Mortgages (Semi-Annual Compounding) and Voluntary Extra Payments.
 - **Changes**:

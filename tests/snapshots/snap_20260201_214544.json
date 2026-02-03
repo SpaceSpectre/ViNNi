@@ -1,0 +1,18 @@
+{
+  "id": "math_turn_20260201_214544",
+  "timestamp": "2026-02-01T21:45:44.114719",
+  "category": "Math",
+  "model": {},
+  "input": {
+    "question": "Test",
+    "extracted_params": {},
+    "assumptions": [
+      "Test"
+    ]
+  },
+  "engine_result": {
+    "k": "v"
+  },
+  "final_response": "Test Resp",
+  "verification_guidance": "Ensure final_response matches engine_result values."
+}

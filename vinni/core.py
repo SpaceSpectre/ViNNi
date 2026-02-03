@@ -161,30 +161,41 @@ class ChatBot:
                      "SYSTEM: This query is AMBIGUOUS regarding card values (Ace=1/11? 10-cards?). "
                      "INSTRUCTION: You MUST ask the user for clarification before calculating. "
                      "Do not attempt to answer."
-                 )
+                 ), None, None
 
+            # v0.9.0 Assumption Tracking
+            assumptions = []
+            
             if "loan" in extracted_type:
-                # Default daily/weekly logic mapping
-                freq = data.get("payment_freq", "monthly")
-                comp_freq = data.get("compounding_freq", "monthly")
+                # Default defaults
+                freq = data.get("payment_freq")
+                if not freq:
+                    freq = "monthly"
+                    assumptions.append("Payment Frequency: Monthly (Default)")
+                    
+                comp_freq = data.get("compounding_freq")
+                if not comp_freq:
+                    comp_freq = "monthly"
+                    # Only log if relevant (not usually logged for US loans unless ambiguous)
+                    # assumptions.append("Compounding: Monthly (Default)")
                 
                 # v0.4.2 Hard Override for Compounding Text
                 if "calculated annually" in user_input.lower() or "compounded annually" in user_input.lower():
                     comp_freq = "annually"
                 if "compounded semi-annually" in user_input.lower() or "semi-annual" in user_input.lower():
                     comp_freq = "semi-annually"
+                if "canadian" in user_input.lower() and "mortgage" in user_input.lower():
+                    comp_freq = "semi-annually"
+                    assumptions.append("Compounding: Semi-Annually (Canadian Convention detected)")
 
                 # v0.5.0 Parameter Validation
-                principal = float(data.get("principal", 0))
+                principal_raw = data.get("principal", 0)
+                principal = float(principal_raw)
                 if principal <= 0:
-                     return "SYSTEM ERROR: Loan detected but Principal amount is missing or zero. INSTRUCTION: Ask user for the loan amount explicitly."
+                     return "SYSTEM ERROR: Loan detected but Principal amount is missing or zero. INSTRUCTION: Ask user for the loan amount explicitly.", None, None
 
                 # v0.8.0 Advanced Finance Features
-                # 1. Canadian Mortgage Detection
-                if "canadian" in user_input.lower() and "mortgage" in user_input.lower():
-                     comp_freq = "semi-annually"
-                
-                # 2. Extra Payment Extraction (Regex)
+                # Extra Payment Extraction (Regex)
                 extra_payment = 0.0
                 extra_match = re.search(r"extra.*\$([\d,]+)", user_input.lower())
                 if extra_match:
@@ -254,14 +265,23 @@ class ChatBot:
                  result = ProbabilityEngine.solve_blackjack_probability()
             else:
                  # Generic probability or unknown type -> Bypass Engine
-                 return None
+                 return None, None, None
             
             if result:
+                # v0.9.0 Enhanced Context Injection
+                assumption_text = ""
+                if assumptions:
+                    assumption_text = f"\nASSUMPTIONS APPLIED: {', '.join(assumptions)}. User did not specify these, but I used defaults. MENTION THIS."
+                
                 return (
-                    f"SYSTEM: I have utilized the Deterministic Math Engine to calculate the precise values.\n"
+                    f"SYSTEM: I have utilized the underlying math engine to provide accurate calculations.\n"
                     f"VERIFIED RESULT JSON: {json.dumps(result, indent=2)}\n"
-                    f"INSTRUCTION: You MUST use these exact numbers in your response. Do not re-calculate. "
-                    f"Present the solution using these values."
+                    f"{assumption_text}\n"
+                    f"INSTRUCTION: Start with a 'TL;DR' summary (2 lines). Then provide a 'Detailed Breakdown'.\n"
+                    f"INSTRUCTION: You MUST use these exact numbers. Do not re-calculate.\n"
+                    f"INSTRUCTION: At the end of your response, append exactly: '[Confidence: 1.0 (Deterministic Math)]'\n",
+                    result,
+                    assumptions
                 )
                 
         except Exception as e:
@@ -371,10 +391,21 @@ class ChatBot:
             return
 
         # 3.5 Math Engine Intercept (v0.3.0)
-        math_context = self._process_math_request(user_input, predicted_intent)
-        if math_context:
-            # Inject context by appending to user message (Avoids System-at-end issue)
-            self.history[-1]['content'] += f"\n\n{math_context}"
+        math_result_pkg = self._process_math_request(user_input, predicted_intent)
+        math_context = None
+        engine_data = None
+        assumptions = []
+        
+        if math_result_pkg:
+            if isinstance(math_result_pkg, tuple):
+                 math_context, engine_data, assumptions = math_result_pkg
+            else:
+                 # Legacy string support (e.g. error messages)
+                 math_context = math_result_pkg
+            
+            if math_context:
+                # Inject context by appending to user message (Avoids System-at-end issue)
+                self.history[-1]['content'] += f"\n\n{math_context}"
         
         full_response = ""
         
@@ -409,6 +440,18 @@ class ChatBot:
                       full_response += warning
                       # Update history with warning included?
                       self.history[-1]['content'] = full_response
+                      
+            # v0.9.0 Regression Snapshot
+            if engine_data:
+                 from vinni.snapshot import RegressionSnapshot
+                 RegressionSnapshot.save(
+                     question=user_input,
+                     engine_input=intent_info, # Log extracted data
+                     engine_output=engine_data,
+                     final_response=full_response,
+                     model_config={"name": self.model_name, "ver": self.prompt_version},
+                     assumptions=assumptions
+                 )
             
             # Update Cache (v0.2.4 Segmented LRU)
             limit = self.cache_limits.get(predicted_intent, 50)
